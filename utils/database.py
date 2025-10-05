@@ -27,3 +27,10 @@ class Database:
             result = await conn.execute(text("SELECT * FROM workers WHERE discord_id = :id"), {"id": id})
             return result.first()
         
+    async def give_penalty(self,id: str):
+        async with self.engine.connect() as conn:
+            if not await self.worker_exists(id):
+                await self.add_worker_if_not_exists(id)
+            await conn.execute(text("UPDATE workers SET penalty = penalty + 1 WHERE discord_id = :id"), {"id": id})
+            await conn.commit()
+        
