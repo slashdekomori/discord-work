@@ -11,7 +11,7 @@ class Bot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.all()
         self.db = Database()
-        super().__init__(command_prefix = None, intents = intents)
+        super().__init__(command_prefix=commands.when_mentioned_or("!"), intents = intents)
 
     async def setup_hook(self):
         for filename in os.listdir('./cogs'):
