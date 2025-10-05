@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 from .config import settings
 import asyncio
