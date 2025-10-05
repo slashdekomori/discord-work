@@ -11,6 +11,5 @@ class General(commands.Cog):
     async def ping(self, interaction: Interaction):
         await interaction.response.send_message("Здарова пасики!")
 
-
 async def setup(bot):
     await bot.add_cog(General(bot))
