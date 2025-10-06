@@ -9,25 +9,48 @@ class General(commands.Cog):
         self.bot = bot
         self.db = bot.db
 
-    @app_commands.command(name="profile", description="Узнать информацию о себе.")
-    async def profile(self, interaction: Interaction):
+    @app_commands.command(name="profile", description="Узнать информацию о себе или о ком то.")
+    @app_commands.describe(user="Пользователь о котором хотите посмотреть информацию.")
+    async def profile(self, interaction: discord.Interaction, user: discord.User = None):
+        target = user or interaction.user
+
+        if target.bot:
+            await interaction.response.send_message("Нельзя смотреть профиль ботов.", ephemeral=True)
+            return
+
+        query = await self.db.get_workers(str(target.id))
+
         embed = discord.Embed(
-            title="Профиль",
-            description=f"Информация о пользователе {interaction.user.name}",
+            title=f"Профиль {target.name}",
+            description=f"Информация о пользователе",
             color=discord.Color.blurple()
         )
-        query = await self.db.get_workers(str(interaction.user.id))
-        embed.add_field(name="Штрафы:", value=int(query[1]), inline=False)
+
+        embed.set_thumbnail(url=target.display_avatar.url)
+        embed.add_field(name="Штрафы:", value=f"```{int(query[1])}```", inline=True)
+        embed.add_field(name="Часов работы:", value=f"```123```", inline=True)
+
         await interaction.response.send_message(embed=embed)
     
-    @app_commands.command(name="give_penalty", description="Информация о боте.")
+    @app_commands.command(name="give_penalty", description="Выдать штраф.")
     @app_commands.describe(user="Пользователь, которому хотите выдать штраф.")
     async def give_penalty(self, interaction: Interaction, user: User):
+        if user.bot:
+            await interaction.response.send_message("Нельзя дать пенальти боту", ephemeral=True)
+            return
+
         if interaction.user.id not in devs:
             await interaction.response.send_message("У вас нет прав на использование этой команды.", ephemeral=True)
             return
+
+        embed = discord.Embed(
+            title=f"Штраф !",
+            description=f"**Выдан пользователю {user.mention}**",
+            color=discord.Color.dark_red()
+        )
+
         await self.db.give_penalty(str(user.id))
-        await interaction.response.send_message(f"Штраф выдан пользователю {user.mention}.")
+        await interaction.response.send_message(embed=embed)
         
 
 async def setup(bot):

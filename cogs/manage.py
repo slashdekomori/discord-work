@@ -16,7 +16,6 @@ class Manage(commands.Cog):
         )
         embed.add_field(name="Name", value="Some value", inline=False)
 
-
         view = discord.ui.View()
         button = discord.ui.Button(label="Закончить работу", style=discord.ButtonStyle.primary)
 
@@ -33,7 +32,6 @@ class Manage(commands.Cog):
             await btn_inter.edit_original_response(embed=new_embed, view=None)
         button.callback = button_callback
         view.add_item(button)
-
 
         await interaction.response.send_message(embed=embed, view=view)
 
