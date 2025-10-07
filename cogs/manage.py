@@ -49,7 +49,7 @@ class Manage(commands.Cog):
 
         embed = discord.Embed(
             title="Перерыв.",
-            description=f"{interaction.user.mention} взял перерыв на {parsed} s"
+            description=f"{interaction.user.mention} взял перерыв на {parsed} s",
             color=discord.Color.yellow()
         )
 
