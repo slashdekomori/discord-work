@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from utils.database import Database
 import os
 import sys
+from pathlib import Path
 load_dotenv()
 
 token = os.getenv("TOKEN")
@@ -14,7 +15,8 @@ class Bot(commands.Bot):
         super().__init__(command_prefix=commands.when_mentioned_or("!"), intents = intents)
 
     async def setup_hook(self):
-        for filename in os.listdir('./cogs'):
+        cogs_dir = Path(__file__).parent / "cogs"
+        for filename in os.listdir(cogs_dir):
             if filename.endswith('.py') and not filename.startswith('_'):
                 try:
                     await self.load_extension(f'cogs.{filename[:-3]}')
