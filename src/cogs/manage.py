@@ -5,6 +5,8 @@ from discord.ext import commands
 # для парсинга времени 
 import humanfriendly
 
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 class Manage(commands.Cog):
     def __init__(self, bot):
@@ -13,29 +15,36 @@ class Manage(commands.Cog):
 
     @app_commands.command(name="start_work", description="Используй чтобы начать работу.")
     async def start_work(self, interaction: Interaction):
+        start_work_time = datetime.now(ZoneInfo('Europe/Moscow'))
+        start_work_time_str = start_work_time.astimezone().strftime("%H:%M")
+
         embed = discord.Embed(
             title="Работа начата!",
-            description=f"- Работник: {interaction.user.mention}",
+            description=f"{interaction.user.mention} начал работу.",
             color=discord.Color.blurple()
         )
-        embed.add_field(name="Name", value="Some value", inline=False)
 
-        view = discord.ui.View()
+        view = discord.ui.View(timeout=None)
         button = discord.ui.Button(label="Закончить работу", style=discord.ButtonStyle.primary)
 
         async def button_callback(btn_inter: Interaction):
             if btn_inter.user.id != interaction.user.id:
-                await btn_inter.response.send_message(
-                    "Эта кнопка не для тебя", ephemeral=True
-                )
                 return
 
+            end_work_time = datetime.now(ZoneInfo("Europe/Moscow"))
+            end_work_time_str = end_work_time.astimezone().strftime("%H:%M")
+
+            time_worked_seconds = int((end_work_time - start_work_time).total_seconds())
+            await self.db.start_work_handle(str(interaction.user.id), time_worked_seconds)
+
             button.disabled = True 
+            view.clear_items()
+
             new_embed = discord.Embed(
                 title="Работа окончена",
-                description="Ты закончил работу!",
-                color=discord.Color.green()
+                description=(f"{interaction.user.name} закончил работу! \nСмена {start_work_time_str} - {end_work_time_str}"),
             )
+
             await btn_inter.response.edit_message(embed=new_embed, view=None) 
 
         button.callback = button_callback
@@ -43,8 +52,8 @@ class Manage(commands.Cog):
 
         await interaction.response.send_message(embed=embed, view=view)
 
-    @app_commands.command(name="break", description="Используй чтобы взять перерыв.")
-    async def ping(self, interaction: Interaction, time: str):
+    @app_commands.command(name="take_break", description="Используй чтобы взять перерыв.")
+    async def take_break(self, interaction: Interaction, time: str):
         parsed = humanfriendly.parse_timespan(time)
 
         embed = discord.Embed(
@@ -53,6 +62,7 @@ class Manage(commands.Cog):
             color=discord.Color.yellow()
         )
 
+        await self.db.break_handle(str(interaction.user.id), parsed)
         await interaction.response.send_message(embed=embed)
  
 async def setup(bot):

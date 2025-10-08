@@ -18,7 +18,11 @@ class General(commands.Cog):
             await interaction.response.send_message("Нельзя смотреть профиль ботов.", ephemeral=True)
             return
 
-        query = await self.db.get_workers(str(target.id))
+        await interaction.response.defer(thinking=True)
+
+        worker = await self.db.get_workers(str(target.id))
+        penalty = worker["penalty"]
+        work_time = max(int(worker["work_time"]) - int(worker["break_time"]),0) / 3600
 
         embed = discord.Embed(
             title=f"Профиль {target.name}",
@@ -27,10 +31,10 @@ class General(commands.Cog):
         )
 
         embed.set_thumbnail(url=target.display_avatar.url)
-        embed.add_field(name="Штрафы:", value=f"```{int(query[1])}```", inline=True)
-        embed.add_field(name="Часов работы:", value=f"```123```", inline=True)
+        embed.add_field(name="Штрафы:", value=f"```{int(penalty)}```", inline=True)
+        embed.add_field(name="Часов работы:", value=f"```{int(work_time)}```", inline=True)
 
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
     
     @app_commands.command(name="give_penalty", description="Выдать штраф.")
     @app_commands.describe(user="Пользователь, которому хотите выдать штраф.")
@@ -51,7 +55,27 @@ class General(commands.Cog):
 
         await self.db.give_penalty(str(user.id))
         await interaction.response.send_message(embed=embed)
-        
+
+    @app_commands.command(name="forgive_penalty", description="Простить штраф.")
+    @app_commands.describe(user="Пользователь, которому хотите простить штраф.")
+    async def forgive_penalty(self, interaction: Interaction, user: User):
+
+        if user.bot:
+            await interaction.response.send_message("Нельзя простить пенальти боту", ephemeral=True)
+            return
+
+        if interaction.user.id not in devs:
+            await interaction.response.send_message("У вас нет прав на использование этой команды.", ephemeral=True)
+            return
+
+        embed = discord.Embed(
+            title=f"Штраф снят!",
+            description=f"**У пользователя {user.mention}**",
+            color=discord.Color.green()
+        )
+
+        await self.db.forgive_penalty_handle(str(user.id))
+        await interaction.response.send_message(embed=embed)       
 
 async def setup(bot):
     await bot.add_cog(General(bot))
